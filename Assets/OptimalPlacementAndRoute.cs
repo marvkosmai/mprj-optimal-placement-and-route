@@ -6,8 +6,10 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 {
     // Samples
     public enum TriangleSelection { PseudoRandom, VanDerCorput }
+    [Header("Samples")]
     public int nSamples = 1000;
     public TriangleSelection triangleSelection = TriangleSelection.PseudoRandom;
+    public bool samplingStats = false;
 
     private Mesh mesh;
     private MeshCollider collider;
@@ -15,8 +17,13 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     private Vector3[] vertices;
 
     private List<Vector3> samplePoints = new List<Vector3>();
+    private int[] triangleSampleCount;
+    private float totalDifference = 0.0f;
+
+    [Space(10)]
 
     // Gizmo
+    [Header("Gizmos")]
     public bool showSamples = true;
 
     // Start is called before the first frame update
@@ -77,21 +84,15 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     void GetSamples()
     {
         samplePoints.Clear();
-        for (int i = 0; i < nSamples; i++)
-        {
-            // make mesh readable in import settings if error
-            Vector3 samplePoint = GetRandomPointOnMesh(mesh, i);
-            samplePoint = collider.transform.localToWorldMatrix.MultiplyPoint(samplePoint);
 
-            samplePoints.Add(samplePoint);
-        }
-    }
-
-    private Vector3 GetRandomPointOnMesh(Mesh mesh, int iteration = 0)
-    {
         float[] sizes = GetTriSizes(triangles, vertices);
         float[] cumulativeSizes = new float[sizes.Length];
         float total = 0;
+
+        if (samplingStats)
+        {
+            triangleSampleCount = new int[sizes.Length];
+        }
 
         for (int i = 0; i < sizes.Length; i++)
         {
@@ -99,6 +100,34 @@ public class OptimalPlacementAndRoute : MonoBehaviour
             cumulativeSizes[i] = total;
         }
 
+        for (int i = 0; i < nSamples; i++)
+        {
+            // make mesh readable in import settings if error
+            Vector3 samplePoint = GetRandomPointOnMesh(sizes, cumulativeSizes, total, i);
+            samplePoint = collider.transform.localToWorldMatrix.MultiplyPoint(samplePoint);
+
+            samplePoints.Add(samplePoint);
+        }
+
+        if (samplingStats)
+        {
+            Debug.Log($"Samples: {nSamples}");
+            Debug.Log($"Triangles: {sizes.Length}");
+
+            totalDifference = 0.0f;
+            for (int i = 0; i < sizes.Length; i++)
+            {
+                float areaPercent = sizes[i] / total;
+                float samplePercent = triangleSampleCount[i] / (float) nSamples;
+
+                totalDifference += Mathf.Abs(areaPercent - samplePercent);
+            }
+            Debug.Log($"Total Difference: {totalDifference}");
+        }
+    }
+
+    private Vector3 GetRandomPointOnMesh(float[] sizes, float[] cumulativeSizes, float total, int iteration = 0)
+    {
         // choose "random" method
         float randomsample = float.MaxValue;
         if (TriangleSelection.PseudoRandom == triangleSelection)
@@ -122,6 +151,11 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         }
 
         if (triIndex == -1) Debug.LogError("triIndex should never be -1");
+
+        if (samplingStats)
+        {
+            triangleSampleCount[triIndex] += 1;
+        }
 
         Vector3 a = vertices[triangles[triIndex * 3]];
         Vector3 b = vertices[triangles[triIndex * 3 + 1]];
@@ -167,6 +201,33 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         }
 
         return q;
+    }
+
+    // only for scientific use
+    void GetSamplesData()
+    {
+        Random.InitState("42".GetHashCode());
+
+        int[] samples = new int[] { 1, 5, 10, 50, 100, 500, 1000, 5000, 10000 };
+
+        float[] pseudoRandom = new float[samples.Length];
+        float[] vanDerCorput = new float[samples.Length];
+
+        for (int i = 0; i < samples.Length; i++)
+        {
+            nSamples = samples[i];
+            triangleSelection = TriangleSelection.PseudoRandom;
+            GetSamples();
+            pseudoRandom[i] = totalDifference;
+
+            triangleSelection = TriangleSelection.VanDerCorput;
+            GetSamples();
+            vanDerCorput[i] = totalDifference;
+        }
+
+        Debug.Log(string.Join(",", samples));
+        Debug.Log(string.Join(",", pseudoRandom));
+        Debug.Log(string.Join(",", vanDerCorput));
     }
 
     // SAMPLES ---
