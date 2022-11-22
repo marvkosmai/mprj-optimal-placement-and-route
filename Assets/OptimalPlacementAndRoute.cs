@@ -18,7 +18,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     private int[] triangles;
     private Vector3[] vertices;
 
-    private List<Vector3> samplePoints = new List<Vector3>();
+    private List<SamplePoint> samplePoints = new List<SamplePoint>();
     private int[] triangleSampleCount;
     private float totalDifference = 0.0f;
 
@@ -99,9 +99,11 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         if (showSamples && (!gridPointsComputed || !showComputedGridPoint))
         {
             Gizmos.color = Color.green;
-            foreach (Vector3 p in samplePoints)
+            foreach (SamplePoint p in samplePoints)
             {
-                Gizmos.DrawSphere(p, 0.1f);
+                Gizmos.DrawSphere(p.location, 0.1f);
+                // Draw normal
+                // Gizmos.DrawLine(p.location, p.location + p.normal);
             }
         }
 
@@ -132,7 +134,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
                 if (computedGridPoint.coverage[i]) Gizmos.color = Color.green;
                 else Gizmos.color = Color.red;
 
-                Gizmos.DrawSphere(samplePoints[i], 0.1f);
+                Gizmos.DrawSphere(samplePoints[i].location, 0.1f);
             }
 
             Gizmos.color = Color.blue;
@@ -182,7 +184,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
             for (int i = 0; i < nSamples; i++)
             {
-                Vector3 origin = samplePoints[i];
+                Vector3 origin = samplePoints[i].location;
                 Vector3 direction = (gridPoint - origin).normalized;
                 commands[i] = new RaycastCommand(origin, direction);
             }
@@ -196,10 +198,10 @@ public class OptimalPlacementAndRoute : MonoBehaviour
             {
                 RaycastHit batchedHit = results[i];
 
-                Vector3 origin = samplePoints[i];
+                Vector3 origin = samplePoints[i].location;
                 float length = Vector3.Distance(origin, gridPoint);
 
-                float angle = Vector3.Angle(origin, gridPoint);
+                float angle = Vector3.Angle(samplePoints[i].normal, gridPoint - origin);
 
                 // only when the ray does not hit a surface,
                 // is shorter than the given length
@@ -332,8 +334,9 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         for (int i = 0; i < nSamples; i++)
         {
             // make mesh readable in import settings if error
-            Vector3 samplePoint = GetRandomPointOnMesh(sizes, cumulativeSizes, total, i);
-            samplePoint = collider.transform.localToWorldMatrix.MultiplyPoint(samplePoint);
+            SamplePoint samplePoint = GetRandomPointOnMesh(sizes, cumulativeSizes, total, i);
+            samplePoint.location = collider.transform.localToWorldMatrix.MultiplyPoint(samplePoint.location);
+            samplePoint.normal = collider.transform.localToWorldMatrix.MultiplyPoint(samplePoint.normal).normalized;
 
             samplePoints.Add(samplePoint);
         }
@@ -355,7 +358,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         }
     }
 
-    private Vector3 GetRandomPointOnMesh(float[] sizes, float[] cumulativeSizes, float total, int iteration = 0)
+    private SamplePoint GetRandomPointOnMesh(float[] sizes, float[] cumulativeSizes, float total, int iteration = 0)
     {
         // choose "random" method
         float randomsample = float.MaxValue;
@@ -403,7 +406,10 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         }
 
         Vector3 pointOnMesh = a + r * (b - a) + s * (c - a);
-        return pointOnMesh + (norm * 0.001f);
+        SamplePoint samplePoint = new SamplePoint();
+        samplePoint.location = pointOnMesh + (norm * 0.001f);
+        samplePoint.normal = norm;
+        return samplePoint;
     }
 
     private float[] GetTriSizes(int[] tris, Vector3[] verts)
