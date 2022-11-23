@@ -7,7 +7,6 @@ using UnityEngine;
 public class OptimalPlacementAndRoute : MonoBehaviour
 {
     // Samples
-    public enum TriangleSelection { PseudoRandom, VanDerCorput }
     [Header("Samples")]
     public int nSamples = 1000;
     public TriangleSelection triangleSelection = TriangleSelection.PseudoRandom;
@@ -33,8 +32,6 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     [Range(0.0f, 10.0f)]
     public float raiseBox = 0.0f;
     public bool standingOnGround = true;
-    
-    public enum InteractiveMode { On, Off }
     public InteractiveMode interactiveMode = InteractiveMode.On;
 
     private List<Vector3> gridPoints = new List<Vector3>();
@@ -56,14 +53,29 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
     [Space(10)]
 
+    // Placement EA
+    [Header("Placement EA")]
+    public int size = 200;
+    public int positions = 10;
+    public Crossover crossover = Crossover.SinglePoint;
+    public Selection selection = Selection.Tournament;
+    [Range(0.0f, 1.0f)]
+    public float mutationRate;
+
+    private Population population;
+
+    [Space(10)]
+
     // Gizmo
     [Header("Gizmos")]
     public bool showSamples = true;
+    public Color samplesColor = Color.green;
     public bool showGridBox = true;
     public bool showGridPoints = true;
     public bool showComputedGridPoint = false;
     [Range(0, 2000)]
     public int showComputedGridPointIndex = 0;
+    public bool showBestIndividual = false;
 
     // Start is called before the first frame update
     void Start()
@@ -90,6 +102,11 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         {
             ComputeRasterPoints();
         }
+
+        if (!population.isInit())
+        {
+            population.Init(computedGridPoints, positions);
+        }
         
     }
 
@@ -98,11 +115,11 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     {
         if (showSamples && (!gridPointsComputed || !showComputedGridPoint))
         {
-            Gizmos.color = Color.green;
+            Gizmos.color = samplesColor;
             foreach (SamplePoint p in samplePoints)
             {
                 Gizmos.DrawSphere(p.location, 0.1f);
-                // Draw normal
+                // Draw normals
                 // Gizmos.DrawLine(p.location, p.location + p.normal);
             }
         }
@@ -140,6 +157,26 @@ public class OptimalPlacementAndRoute : MonoBehaviour
             Gizmos.color = Color.blue;
             Gizmos.DrawSphere(computedGridPoint.location, 0.2f);
         }
+
+        if (null != population && population.isInit() && showBestIndividual)
+        {
+            Individual best = population.getBest();
+
+            for (int i = 0; i < nSamples; i++)
+            {
+                if (best.totalCoverage[i]) Gizmos.color = Color.green;
+                else Gizmos.color = Color.red;
+
+                Gizmos.DrawSphere(samplePoints[i].location, 0.1f);
+            }
+
+            Gizmos.color = Color.blue;
+            foreach (ComputedGridPoint computedGridPoint in best.computedGridPoints)
+            {
+                Gizmos.DrawSphere(computedGridPoint.location, 0.2f);
+            }
+
+        }
     }
     // --- INIT
     void Init()
@@ -167,6 +204,12 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         if (true)
         {
             originalBounds = GetComponent<Renderer>().bounds;
+        }
+
+        // Placement EA
+        if (null == population)
+        {
+            population = new Population(size, selection, crossover);
         }
     }
 
