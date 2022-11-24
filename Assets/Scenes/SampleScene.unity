@@ -409,10 +409,11 @@ MonoBehaviour:
   scanningRange: 3
   maxScanningAngle: 60
   size: 200
-  positions: 10
+  positions: 30
   crossover: 0
   selection: 0
-  mutationRate: 0
+  mutationRate: 0.05
+  elits: 0.1
   showSamples: 0
   samplesColor: {r: 0, g: 1, b: 0, a: 1}
   showGridBox: 0

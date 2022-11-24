@@ -60,7 +60,9 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     public Crossover crossover = Crossover.SinglePoint;
     public Selection selection = Selection.Tournament;
     [Range(0.0f, 1.0f)]
-    public float mutationRate;
+    public float mutationRate = 0.05f;
+    [Range(0.0f, 1.0f)]
+    public float elits = 0.1f;
 
     private Population population;
 
@@ -107,6 +109,9 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         {
             population.Init(computedGridPoints, positions);
         }
+
+        population.Iterate();
+        Debug.Log($"Percent: {population.getBest().fitness / (float) nSamples}");
         
     }
 
@@ -209,7 +214,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         // Placement EA
         if (null == population)
         {
-            population = new Population(size, selection, crossover);
+            population = new Population(size, selection, crossover, mutationRate, elits);
         }
     }
 
