@@ -409,7 +409,7 @@ MonoBehaviour:
   scanningRange: 3
   maxScanningAngle: 60
   size: 200
-  positions: 30
+  positions: 5
   crossover: 0
   selection: 0
   mutationRate: 0.05
@@ -417,10 +417,12 @@ MonoBehaviour:
   showSamples: 0
   samplesColor: {r: 0, g: 1, b: 0, a: 1}
   showGridBox: 0
+  gridColor: {r: 0, g: 0, b: 1, a: 1}
   showGridPoints: 0
-  showComputedGridPoint: 0
+  gridPointColor: {r: 0, g: 0, b: 1, a: 1}
+  showComputedGridPoint: 1
   showComputedGridPointIndex: 0
-  showBestIndividual: 1
+  showBestIndividual: 0
 --- !u!114 &6989850697379517172
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -428,7 +430,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6989850697379517170}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
   m_Name: 

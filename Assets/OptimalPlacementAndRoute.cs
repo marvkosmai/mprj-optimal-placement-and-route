@@ -73,7 +73,9 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     public bool showSamples = true;
     public Color samplesColor = Color.green;
     public bool showGridBox = true;
+    public Color gridColor = Color.blue;
     public bool showGridPoints = true;
+    public Color gridPointColor = Color.blue;
     public bool showComputedGridPoint = false;
     [Range(0, 2000)]
     public int showComputedGridPointIndex = 0;
@@ -131,7 +133,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
         if (showGridBox)
         {
-            Gizmos.color = Color.blue;
+            Gizmos.color = gridColor;
             Gizmos.DrawWireCube(
                 bounds.center,
                 bounds.size
@@ -140,7 +142,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
         if (showGridPoints && (!gridPointsComputed || !showComputedGridPoint))
         {
-            Gizmos.color = Color.blue;
+            Gizmos.color = gridPointColor;
             foreach (Vector3 p in gridPoints)
             {
                 Gizmos.DrawSphere(p, 0.1f);
@@ -153,13 +155,14 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
             for (int i = 0; i < nSamples; i++)
             {
-                if (computedGridPoint.coverage[i]) Gizmos.color = Color.green;
-                else Gizmos.color = Color.red;
-
-                Gizmos.DrawSphere(samplePoints[i].location, 0.1f);
+                if (computedGridPoint.coverage[i])
+                {
+                    Gizmos.color = samplesColor;
+                    Gizmos.DrawSphere(samplePoints[i].location, 0.1f);
+                }
             }
 
-            Gizmos.color = Color.blue;
+            Gizmos.color = gridPointColor;
             Gizmos.DrawSphere(computedGridPoint.location, 0.2f);
         }
 
