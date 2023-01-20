@@ -10,12 +10,18 @@ public class Population
     private Selection selection;
     private Crossover crossover;
 
+    private int nSamples;
+
     private int size;
     private float mutationRate;
     private float elits;
     private bool init;
 
-    public Population(int size, Selection selection, Crossover crossover, float mutationRate, float elits)
+    private int generation;
+
+    private PopulationStats stats;
+
+    public Population(int size, Selection selection, Crossover crossover, float mutationRate, float elits, int nSamples)
     {
         this.size = size;
         individuals = new List<Individual>();
@@ -24,7 +30,12 @@ public class Population
         this.mutationRate = mutationRate;
         this.elits = elits;
 
+        this.nSamples = nSamples;
+
+        this.generation = 0;
         this.init = false;
+
+        stats = new PopulationStats();
     }
 
     public void Init(List<ComputedGridPoint> computedGridPoints, int positions)
@@ -46,6 +57,8 @@ public class Population
 
         Debug.Log("Population initialized!");
         this.init = true;
+        this.generation = 1;
+        addStats();
     }
 
     public void Iterate()
@@ -58,9 +71,31 @@ public class Population
             newIndividuals.Add(new Individual(new List<ComputedGridPoint>(individuals[i].computedGridPoints)));
         }
 
+        List<Individual> matingPool = new List<Individual>();
+
+        for (int i = 0; i < size; i++)
+        {
+            if (selection == Selection.Tournament)
+            {
+                matingPool.Add(Tournament());
+            }
+        }
+
         for (int i = elits; i < size; i++) 
         {
-            Individual kid = PointCrossover(Tournament(), Tournament());
+            Individual kid;
+            if (crossover == Crossover.SinglePoint)
+            {
+                kid = PointCrossover(
+                    matingPool[Random.Range(0, matingPool.Count)],
+                    matingPool[Random.Range(0, matingPool.Count)]
+                );
+            } 
+            else
+            {
+                throw new System.NotImplementedException("No crossover method!");
+            }
+            
 
             kid = Mutate(kid);
 
@@ -70,6 +105,9 @@ public class Population
         individuals.Clear();
         individuals = newIndividuals;
         Sort();
+        generation++;
+
+        addStats();
     }
 
     private Individual Tournament()
@@ -118,9 +156,44 @@ public class Population
         return this.init;
     }
 
+    private void addStats()
+    {
+        stats.addBestVisibility(getBestVisibility());
+    }
+
     public Individual getBest()
     {
         return individuals[0];
+    }
+
+    public float getAverageFitness()
+    {
+        int totalFitness = 0;
+
+        foreach (Individual i in individuals)
+        {
+            totalFitness += i.fitness;
+        }
+
+        return totalFitness / size;
+    }
+
+    public float getBestVisibility()
+    {
+        return getBest().visibleSamples / (float) nSamples;
+    }
+
+    public void printStats(int everyGeneration = 10)
+    {
+        if (generation % everyGeneration != 0)
+        {
+            return;
+        }
+
+        Debug.Log(
+            $"Generation: {generation} | " +
+            $"Best Visibility: {getBestVisibility()} | " +
+            $"Average Fitness: {getAverageFitness()}");
     }
 
     private void Sort()

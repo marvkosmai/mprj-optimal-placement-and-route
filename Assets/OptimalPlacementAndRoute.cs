@@ -11,6 +11,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     public int nSamples = 1000;
     public TriangleSelection triangleSelection = TriangleSelection.PseudoRandom;
     public bool samplingStats = false;
+    private bool gotSamples = false;
 
     private Mesh mesh;
     private MeshCollider collider;
@@ -113,8 +114,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         }
 
         population.Iterate();
-        Debug.Log($"Percent: {population.getBest().fitness / (float) nSamples}");
-        
+        population.printStats();
     }
 
     // Draws Gizmos
@@ -217,7 +217,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         // Placement EA
         if (null == population)
         {
-            population = new Population(size, selection, crossover, mutationRate, elits);
+            population = new Population(size, selection, crossover, mutationRate, elits, nSamples);
         }
     }
 
@@ -391,6 +391,8 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
             samplePoints.Add(samplePoint);
         }
+
+        gotSamples = true;
 
         if (samplingStats)
         {

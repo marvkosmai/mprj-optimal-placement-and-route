@@ -6,6 +6,7 @@ public class Individual
 {
     public ComputedGridPoint[] computedGridPoints;
     public bool[] totalCoverage;
+    public int visibleSamples;
     public int fitness;
 
     public Individual(List<ComputedGridPoint> gridPoints)
@@ -33,16 +34,18 @@ public class Individual
 
     private void calcFitness()
     {
-        int f = 0;
+        int samples = 0;
         for (int j = 0; j < totalCoverage.Length; j++)
         {
             if (totalCoverage[j])
             {
-                f++;
+                samples++;
             }
         }
 
-        this.fitness = f;
+        this.visibleSamples = samples;
+
+        this.fitness = visibleSamples;
     }
 
 }
