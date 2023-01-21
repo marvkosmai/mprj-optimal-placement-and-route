@@ -8,6 +8,7 @@ public class Individual
     public bool[] totalCoverage;
     public int visibleSamples;
     public int fitness;
+    public bool fullyConnected;
 
     public Individual(List<ComputedGridPoint> gridPoints)
     {
@@ -29,10 +30,10 @@ public class Individual
             }
         }
 
-        this.calcFitness();
+        this.CalcFitness();
     }
 
-    private void calcFitness()
+    private void CalcFitness()
     {
         int samples = 0;
         for (int j = 0; j < totalCoverage.Length; j++)
@@ -43,9 +44,43 @@ public class Individual
             }
         }
 
+        CalcFullyConnected();
+
         this.visibleSamples = samples;
 
         this.fitness = visibleSamples;
+    }
+
+    private void CalcFullyConnected()
+    {
+        List<ComputedGridPoint> visited = new List<ComputedGridPoint>();
+
+        Queue<ComputedGridPoint> q = new Queue<ComputedGridPoint>();
+        q.Enqueue(computedGridPoints[0]);
+
+        visited.Add(computedGridPoints[0]);
+
+        while (q.Count != 0)
+        {
+            ComputedGridPoint current = q.Dequeue();
+
+            foreach (ComputedGridPoint cgp in computedGridPoints)
+            {
+                if (visited.Contains(cgp))
+                {
+                    continue;
+                }
+
+                RaycastHit hit;
+                if (!Physics.Raycast(current.location, (cgp.location - current.location).normalized, out hit, Mathf.Infinity))
+                {
+                    q.Enqueue(cgp);
+                    visited.Add(cgp);
+                }
+            }
+        }
+
+        fullyConnected = visited.Count == computedGridPoints.Length;
     }
 
 }

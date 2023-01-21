@@ -238,7 +238,7 @@ public class Population
 
         Debug.Log(
             $"Generation: {generation} | " +
-            $"Best Visibility: {getBestVisibility()} | " +
+            $"Best Visibility: {getBestVisibility()} {getBest().fullyConnected} | " +
             $"Average Fitness: {getAverageFitness()} | " +
             $"Standard Deviation: {getStandardDeviation()}"
         );
