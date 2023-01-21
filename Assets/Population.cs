@@ -78,6 +78,14 @@ public class Population
             if (selection == Selection.Tournament)
             {
                 matingPool.Add(Tournament());
+            } 
+            else if (selection == Selection.RouletteWheel)
+            {
+                matingPool.Add(RouletteWheel());
+            }
+            else
+            {
+                throw new System.NotImplementedException("No selection method!");
             }
         }
 
@@ -116,6 +124,31 @@ public class Population
         Individual b = individuals[Random.Range(0, individuals.Count)];
 
         return a.fitness > b.fitness ? a : b;
+    }
+
+    private Individual RouletteWheel()
+    {
+        int totalFitness = 0;
+        List<int> sections = new List<int>();
+
+        foreach (Individual individual in individuals)
+        {
+            totalFitness += individual.fitness;
+            sections.Add(totalFitness);
+        }
+
+        int selection = Random.Range(0, totalFitness);
+        int index = -1;
+        for (int i = 0; i < sections.Count; i++)
+        {
+            if (selection <= sections[i])
+            {
+                index = i;
+                break;
+            }
+        }
+
+        return individuals[index];
     }
 
     private Individual PointCrossover(Individual a, Individual b)
@@ -183,6 +216,19 @@ public class Population
         return getBest().visibleSamples / (float) nSamples;
     }
 
+    public float getStandardDeviation() 
+    {
+        float mean = getAverageFitness();
+
+        float sum = 0;
+        foreach (Individual i in individuals)
+        {
+            sum += (i.fitness - mean) * (i.fitness - mean);
+        }
+
+        return Mathf.Sqrt(sum / size);
+    }
+
     public void printStats(int everyGeneration = 10)
     {
         if (generation % everyGeneration != 0)
@@ -193,7 +239,9 @@ public class Population
         Debug.Log(
             $"Generation: {generation} | " +
             $"Best Visibility: {getBestVisibility()} | " +
-            $"Average Fitness: {getAverageFitness()}");
+            $"Average Fitness: {getAverageFitness()} | " +
+            $"Standard Deviation: {getStandardDeviation()}"
+        );
     }
 
     private void Sort()
