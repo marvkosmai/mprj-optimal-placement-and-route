@@ -14,6 +14,7 @@ public class Population
 
     private int size;
     private float mutationRate;
+    private float crossoverRate;
     private float elits;
     private bool init;
 
@@ -21,13 +22,14 @@ public class Population
 
     private PopulationStats stats;
 
-    public Population(int size, Selection selection, Crossover crossover, float mutationRate, float elits, int nSamples)
+    public Population(int size, Selection selection, Crossover crossover, float mutationRate, float crossoverRate, float elits, int nSamples)
     {
         this.size = size;
         individuals = new List<Individual>();
         this.selection = selection;
         this.crossover = crossover;
         this.mutationRate = mutationRate;
+        this.crossoverRate = crossoverRate;
         this.elits = elits;
 
         this.nSamples = nSamples;
@@ -45,12 +47,7 @@ public class Population
         individuals.Clear();
         for (int i = 0; i < this.size; i++)
         {
-            List<ComputedGridPoint> randomGridPoints = new List<ComputedGridPoint>();
-            for (int j = 0; j < positions; j++)
-            {
-                randomGridPoints.Add(computedGridPoints[Random.Range(0, computedGridPoints.Count)]);
-            }
-            individuals.Add(new Individual(randomGridPoints));
+            individuals.Add(new Individual(computedGridPoints, positions));
         }
 
         this.Sort();
@@ -68,7 +65,7 @@ public class Population
         int elits = (int) (size * this.elits);
         for (int i = 0; i < elits; i++)
         {
-            newIndividuals.Add(new Individual(new List<ComputedGridPoint>(individuals[i].computedGridPoints)));
+            newIndividuals.Add(new Individual(computedGridPoints, individuals[i].chromosomeGridPoints));
         }
 
         List<Individual> matingPool = new List<Individual>();
@@ -153,33 +150,51 @@ public class Population
 
     private Individual PointCrossover(Individual a, Individual b)
     {
-        List<ComputedGridPoint> computedGridPoints = new List<ComputedGridPoint>();
-        int length = a.computedGridPoints.Length;
+        int length = a.chromosomeGridPoints.Length;
+        bool[] chromosomeGridPoints = new bool[length];
         int crossover = Random.Range(0, length);
+
+        if (Random.Range(0.0f, 1.0f) > crossoverRate)
+        {
+            return a;
+        }
 
         for (int i = 0; i < length; i++)
         {
             if (i < crossover)
             {
-                computedGridPoints.Add(a.computedGridPoints[i]);
-            } else
+                chromosomeGridPoints[i] = a.chromosomeGridPoints[i];
+            } 
+            else
             {
-                computedGridPoints.Add(b.computedGridPoints[i]);
+                chromosomeGridPoints[i] = b.chromosomeGridPoints[i];
             }
         }
 
-        return new Individual(computedGridPoints);
+        return new Individual(computedGridPoints, chromosomeGridPoints);
     }
 
     private Individual Mutate(Individual individual)
     {
+        /**
+        for (int i = 0; i < individual.chromosomeGridPoints.Length; i++)
+        {
+            if (individual.chromosomeGridPoints[i] && Random.Range(0.0f, 1.0f) > mutationRate)
+            {
+                individual.chromosomeGridPoints[i] = false;
+            }
+        }
+        **/
+
+        
         if (Random.Range(0.0f, 1.0f) <= mutationRate)
         {
             return individual;
         }
-
-        int point = Random.Range(0, individual.computedGridPoints.Length);
-        individual.computedGridPoints[point] = computedGridPoints[Random.Range(0, computedGridPoints.Count)];
+        int point = Random.Range(0, individual.chromosomeGridPoints.Length);
+        individual.chromosomeGridPoints[point] = !individual.chromosomeGridPoints[point];
+        
+        individual.Init(computedGridPoints);
 
         return individual;
     }
@@ -211,9 +226,26 @@ public class Population
         return totalFitness / size;
     }
 
+    public float getAverageLocations()
+    {
+        int totalLocations = 0;
+
+        foreach (Individual i in individuals)
+        {
+            totalLocations += i.computedGridPoints.Length;
+        }
+
+        return totalLocations / size;
+    }
+
     public float getBestVisibility()
     {
         return getBest().visibleSamples / (float) nSamples;
+    }
+
+    public int getBestFitness()
+    {
+        return getBest().fitness;
     }
 
     public float getStandardDeviation() 
@@ -239,6 +271,8 @@ public class Population
         Debug.Log(
             $"Generation: {generation} | " +
             $"Best Visibility: {getBestVisibility()} {getBest().fullyConnected} | " +
+            $"Best Fitness: {getBestFitness()} | " +
+            $"Avergae Locations: {getAverageLocations()} | " +
             $"Average Fitness: {getAverageFitness()} | " +
             $"Standard Deviation: {getStandardDeviation()}"
         );

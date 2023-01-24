@@ -63,6 +63,8 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float mutationRate = 0.05f;
     [Range(0.0f, 1.0f)]
+    public float crossoverRate = 1.00f;
+    [Range(0.0f, 1.0f)]
     public float elits = 0.1f;
 
     private Population population;
@@ -217,7 +219,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         // Placement EA
         if (null == population)
         {
-            population = new Population(size, selection, crossover, mutationRate, elits, nSamples);
+            population = new Population(size, selection, crossover, mutationRate, crossoverRate, elits, nSamples);
         }
     }
 
