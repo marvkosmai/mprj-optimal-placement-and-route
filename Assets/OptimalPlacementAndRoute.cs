@@ -96,6 +96,19 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         }
     }
 
+    [DebugGUIGraph(min: 0, max: 1, r: 0, g: 1, b: 1, autoScale: true, group: 1)]
+    float bestFitness = 0;
+
+    [DebugGUIGraph(min: 0, max: 1, r: 1, g: 0, b: 0, autoScale: true, group: 1)]
+    float bestLocations = 0;
+
+
+    [DebugGUIGraph(min: 0, max: 1, r: 0, g: 0, b: 1, autoScale: true, group: 2)]
+    float averageLocations = 0;
+
+    [DebugGUIGraph(min: 0, max: 1, r: 0, g: 1, b: 0, autoScale: true, group: 3)]
+    float standardDeviation = 0;
+
     // Update is called once per frame
     void Update()
     {
@@ -117,6 +130,10 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
         population.Iterate();
         population.printStats();
+        bestFitness = population.getBestFitness();
+        bestLocations = population.getBestLocations();
+        averageLocations = population.getAverageLocations();
+        standardDeviation = population.getStandardDeviation();
     }
 
     // Draws Gizmos

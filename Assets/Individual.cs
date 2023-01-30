@@ -14,6 +14,7 @@ public class Individual
 
     public Individual(List<ComputedGridPoint> gridPoints, int initalPositions)
     {
+        this.allComputedGridPoints = gridPoints;
         this.chromosomeGridPoints = new bool[gridPoints.Count];
         
 
@@ -22,21 +23,17 @@ public class Individual
             int randomIndex = Random.Range(0, gridPoints.Count);
             this.chromosomeGridPoints[randomIndex] = true;
         }
-
-        this.Init(gridPoints);
     }
 
     public Individual(List<ComputedGridPoint> gridPoints, bool[] chromosomeGridPoints)
     {
+        this.allComputedGridPoints = gridPoints;
         this.chromosomeGridPoints = chromosomeGridPoints;
-
-        this.Init(gridPoints);
     }
 
-    public void Init(List<ComputedGridPoint> gridPoints)
+    public void Init()
     {
-        this.allComputedGridPoints = gridPoints;
-        this.totalCoverage = new bool[gridPoints[0].coverage.Count];
+        this.totalCoverage = new bool[allComputedGridPoints[0].coverage.Count];
 
         int positions = 0;
         for (int i = 0; i < chromosomeGridPoints.Length; i++)
@@ -53,7 +50,7 @@ public class Individual
         {
             if (chromosomeGridPoints[i])
             {
-                computedGridPoints[count++] = gridPoints[i];
+                computedGridPoints[count++] = allComputedGridPoints[i];
             }
         }
 
@@ -69,15 +66,13 @@ public class Individual
                 }
             }
         }
-
-        this.CalcFitness();
     }
 
-    private void CalcFitness()
+    public void CalcFitness()
     {
         if (computedGridPoints.Length == 0)
         {
-            this.fitness = 0;
+            this.fitness = 1;
             return;
         }
 
@@ -94,10 +89,10 @@ public class Individual
 
         this.visibleSamples = samples;
 
-        float visiblePercent = (((float)visibleSamples / this.allComputedGridPoints[0].coverage.Count) * 100);
-        float locationPercent = (((float)computedGridPoints.Length / this.allComputedGridPoints.Count) * 100);
+        float visiblePercent = ((float)visibleSamples / this.allComputedGridPoints[0].coverage.Count) * 100;
+        float locationPercent = ((float)computedGridPoints.Length / this.allComputedGridPoints.Count) * 100;
 
-        this.fitness = (int)((visiblePercent / locationPercent) * 100);
+        this.fitness = (int)(0.2 * visiblePercent) + (int)(0.8 * (100.0 - locationPercent));
     }
 
     // Implemted a BTS

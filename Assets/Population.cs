@@ -47,7 +47,10 @@ public class Population
         individuals.Clear();
         for (int i = 0; i < this.size; i++)
         {
-            individuals.Add(new Individual(computedGridPoints, positions));
+            Individual individual = new Individual(computedGridPoints, positions);
+            individual.Init();
+            individual.CalcFitness();
+            individuals.Add(individual);
         }
 
         this.Sort();
@@ -63,13 +66,19 @@ public class Population
         List<Individual> newIndividuals = new List<Individual>();
 
         int elits = (int) (size * this.elits);
+        if ((size - elits) % 2 == 1)
+        {
+            elits--;
+        }
         for (int i = 0; i < elits; i++)
         {
-            newIndividuals.Add(new Individual(computedGridPoints, individuals[i].chromosomeGridPoints));
+            Individual elit = new Individual(computedGridPoints, individuals[i].chromosomeGridPoints);
+            elit.Init();
+            elit.CalcFitness();
+            newIndividuals.Add(elit);
         }
 
         List<Individual> matingPool = new List<Individual>();
-
         for (int i = 0; i < size; i++)
         {
             if (selection == Selection.Tournament)
@@ -86,12 +95,12 @@ public class Population
             }
         }
 
-        for (int i = elits; i < size; i++) 
+        for (int i = elits; i < size; i += 2) 
         {
-            Individual kid;
+            Individual[] kids;
             if (crossover == Crossover.SinglePoint)
             {
-                kid = PointCrossover(
+                kids = PointCrossover(
                     matingPool[Random.Range(0, matingPool.Count)],
                     matingPool[Random.Range(0, matingPool.Count)]
                 );
@@ -102,9 +111,16 @@ public class Population
             }
             
 
-            kid = Mutate(kid);
+            Individual kidA = Mutate(kids[0]);
+            Individual kidB = Mutate(kids[1]);
 
-            newIndividuals.Add(kid);
+            kidA.Init();
+            kidB.Init();
+            kidA.CalcFitness();
+            kidB.CalcFitness();
+
+            newIndividuals.Add(kidA);
+            newIndividuals.Add(kidB);
         }
 
         individuals.Clear();
@@ -148,53 +164,84 @@ public class Population
         return individuals[index];
     }
 
-    private Individual PointCrossover(Individual a, Individual b)
+    private Individual[] PointCrossover(Individual a, Individual b)
     {
         int length = a.chromosomeGridPoints.Length;
-        bool[] chromosomeGridPoints = new bool[length];
+        bool[] chromosomeGridPointsA = new bool[length];
+        bool[] chromosomeGridPointsB = new bool[length];
         int crossover = Random.Range(0, length);
 
         if (Random.Range(0.0f, 1.0f) > crossoverRate)
         {
-            return a;
+            return new Individual[] { a, b };
         }
 
         for (int i = 0; i < length; i++)
         {
             if (i < crossover)
             {
-                chromosomeGridPoints[i] = a.chromosomeGridPoints[i];
+                chromosomeGridPointsA[i] = a.chromosomeGridPoints[i];
+                chromosomeGridPointsB[i] = b.chromosomeGridPoints[i];
             } 
             else
             {
-                chromosomeGridPoints[i] = b.chromosomeGridPoints[i];
+                chromosomeGridPointsA[i] = b.chromosomeGridPoints[i];
+                chromosomeGridPointsB[i] = a.chromosomeGridPoints[i];
             }
         }
 
-        return new Individual(computedGridPoints, chromosomeGridPoints);
+        return new Individual[]
+        {
+            new Individual(computedGridPoints, chromosomeGridPointsA),
+            new Individual(computedGridPoints, chromosomeGridPointsB)
+        };
     }
 
     private Individual Mutate(Individual individual)
     {
-        /**
-        for (int i = 0; i < individual.chromosomeGridPoints.Length; i++)
-        {
-            if (individual.chromosomeGridPoints[i] && Random.Range(0.0f, 1.0f) > mutationRate)
-            {
-                individual.chromosomeGridPoints[i] = false;
-            }
-        }
-        **/
-
-        
         if (Random.Range(0.0f, 1.0f) <= mutationRate)
         {
             return individual;
         }
-        int point = Random.Range(0, individual.chromosomeGridPoints.Length);
-        individual.chromosomeGridPoints[point] = !individual.chromosomeGridPoints[point];
         
-        individual.Init(computedGridPoints);
+        List<int> active = new List<int>();
+        List<int> inactive = new List<int>();
+        for (int i = 0; i < individual.chromosomeGridPoints.Length; i++)
+        {
+            if (individual.chromosomeGridPoints[i])
+            {
+                active.Add(i);
+            }
+            else
+            {
+                inactive.Add(i);
+            }
+        }
+
+        if (active.Count > 0 && inactive.Count == 0)
+        {
+            int p = active[Random.Range(0, active.Count)];
+            individual.chromosomeGridPoints[p] = false;
+            return individual;
+        }
+
+        if (inactive.Count > 0 && active.Count == 0)
+        {
+            int p = inactive[Random.Range(0, inactive.Count)];
+            individual.chromosomeGridPoints[p] = true;
+            return individual;
+        }
+
+        if (Random.Range(0.0f, 1.0f) <= 0.5)
+        {
+            int p = active[Random.Range(0, active.Count)];
+            individual.chromosomeGridPoints[p] = false;
+        }
+        else
+        {
+            int p = inactive[Random.Range(0, inactive.Count)];
+            individual.chromosomeGridPoints[p] = true;
+        }
 
         return individual;
     }
@@ -246,6 +293,11 @@ public class Population
     public int getBestFitness()
     {
         return getBest().fitness;
+    }
+
+    public int getBestLocations()
+    {
+        return getBest().computedGridPoints.Length;
     }
 
     public float getStandardDeviation() 
