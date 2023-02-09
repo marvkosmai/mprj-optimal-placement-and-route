@@ -11,6 +11,7 @@ public class Population
     private Crossover crossover;
 
     private int nSamples;
+    private int visiableSamples;
 
     private int size;
     private float mutationRate;
@@ -43,11 +44,15 @@ public class Population
     public void Init(List<ComputedGridPoint> computedGridPoints, int positions)
     {
         this.computedGridPoints = computedGridPoints;
+        this.visiableSamples = calcVisibleSamples();
+
+        Debug.Log($"Samples: {nSamples}");
+        Debug.Log($"Visible Samples: {visiableSamples}");
 
         individuals.Clear();
         for (int i = 0; i < this.size; i++)
         {
-            Individual individual = new Individual(computedGridPoints, positions);
+            Individual individual = new Individual(computedGridPoints, positions, visiableSamples);
             individual.Init();
             individual.CalcFitness();
             individuals.Add(individual);
@@ -61,6 +66,32 @@ public class Population
         addStats();
     }
 
+    private int calcVisibleSamples()
+    {
+        bool[] totalCoverage = new bool[computedGridPoints[0].coverage.Count];
+
+        for (int i = 0; i < computedGridPoints.Count; i++)
+        {
+            ComputedGridPoint gridPoint = computedGridPoints[i];
+
+            for (int j = 0; j < totalCoverage.Length; j++)
+            {
+                if (gridPoint.coverage[j])
+                {
+                    totalCoverage[j] = true;
+                }
+            }
+        }
+
+        int count = 0;
+        foreach (bool visible in totalCoverage)
+        {
+            if (visible) count++;
+        }
+
+        return count;
+    }
+
     public void Iterate()
     {
         List<Individual> newIndividuals = new List<Individual>();
@@ -72,7 +103,7 @@ public class Population
         }
         for (int i = 0; i < elits; i++)
         {
-            Individual elit = new Individual(computedGridPoints, individuals[i].chromosomeGridPoints);
+            Individual elit = new Individual(computedGridPoints, individuals[i].chromosomeGridPoints, visiableSamples);
             elit.Init();
             elit.CalcFitness();
             newIndividuals.Add(elit);
@@ -141,8 +172,8 @@ public class Population
 
     private Individual RouletteWheel()
     {
-        int totalFitness = 0;
-        List<int> sections = new List<int>();
+        float totalFitness = 0f;
+        List<float> sections = new List<float>();
 
         foreach (Individual individual in individuals)
         {
@@ -150,7 +181,7 @@ public class Population
             sections.Add(totalFitness);
         }
 
-        int selection = Random.Range(0, totalFitness);
+        float selection = Random.Range(0f, totalFitness);
         int index = -1;
         for (int i = 0; i < sections.Count; i++)
         {
@@ -192,8 +223,8 @@ public class Population
 
         return new Individual[]
         {
-            new Individual(computedGridPoints, chromosomeGridPointsA),
-            new Individual(computedGridPoints, chromosomeGridPointsB)
+            new Individual(computedGridPoints, chromosomeGridPointsA, visiableSamples),
+            new Individual(computedGridPoints, chromosomeGridPointsB, visiableSamples)
         };
     }
 
@@ -254,6 +285,8 @@ public class Population
     private void addStats()
     {
         stats.addBestVisibility(getBestVisibility());
+        stats.addBestFitness(getBestFitness());
+        stats.addBestLocations(getBestLocations());
     }
 
     public Individual getBest()
@@ -263,7 +296,7 @@ public class Population
 
     public float getAverageFitness()
     {
-        int totalFitness = 0;
+        float totalFitness = 0;
 
         foreach (Individual i in individuals)
         {
@@ -287,10 +320,10 @@ public class Population
 
     public float getBestVisibility()
     {
-        return getBest().visibleSamples / (float) nSamples;
+        return getBest().visibleSamples / (float) visiableSamples;
     }
 
-    public int getBestFitness()
+    public float getBestFitness()
     {
         return getBest().fitness;
     }
@@ -328,6 +361,11 @@ public class Population
             $"Average Fitness: {getAverageFitness()} | " +
             $"Standard Deviation: {getStandardDeviation()}"
         );
+
+        if (generation == 1000)
+        {
+            JsonExporter.export(stats);
+        }
     }
 
     private void Sort()

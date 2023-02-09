@@ -9,13 +9,15 @@ public class Individual
     public ComputedGridPoint[] computedGridPoints;
     public bool[] totalCoverage;
     public int visibleSamples;
-    public int fitness;
+    public int possibleVisibleSamples;
+    public float fitness = 0.0f;
     public bool fullyConnected;
 
-    public Individual(List<ComputedGridPoint> gridPoints, int initalPositions)
+    public Individual(List<ComputedGridPoint> gridPoints, int initalPositions, int possibleVisibleSamples)
     {
         this.allComputedGridPoints = gridPoints;
         this.chromosomeGridPoints = new bool[gridPoints.Count];
+        this.possibleVisibleSamples = possibleVisibleSamples;
         
 
         for (int i = 0; i < initalPositions; i++)
@@ -25,10 +27,11 @@ public class Individual
         }
     }
 
-    public Individual(List<ComputedGridPoint> gridPoints, bool[] chromosomeGridPoints)
+    public Individual(List<ComputedGridPoint> gridPoints, bool[] chromosomeGridPoints, int possibleVisibleSamples)
     {
         this.allComputedGridPoints = gridPoints;
         this.chromosomeGridPoints = chromosomeGridPoints;
+        this.possibleVisibleSamples = possibleVisibleSamples;
     }
 
     public void Init()
@@ -72,7 +75,7 @@ public class Individual
     {
         if (computedGridPoints.Length == 0)
         {
-            this.fitness = 1;
+            this.fitness = 0.01f;
             return;
         }
 
@@ -89,10 +92,11 @@ public class Individual
 
         this.visibleSamples = samples;
 
-        float visiblePercent = ((float)visibleSamples / this.allComputedGridPoints[0].coverage.Count) * 100;
-        float locationPercent = ((float)computedGridPoints.Length / this.allComputedGridPoints.Count) * 100;
+        //float visiblePercent = (float)visibleSamples / this.allComputedGridPoints[0].coverage.Count;
+        float visiblePercent = (float)visibleSamples / possibleVisibleSamples;
+        float locationPercent = (float)computedGridPoints.Length / this.allComputedGridPoints.Count;
 
-        this.fitness = (int)(0.2 * visiblePercent) + (int)(0.8 * (100.0 - locationPercent));
+        this.fitness = visiblePercent + Mathf.Pow(1.0f - locationPercent, 10);
     }
 
     // Implemted a BTS
