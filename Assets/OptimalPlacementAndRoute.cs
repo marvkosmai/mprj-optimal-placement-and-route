@@ -128,12 +128,15 @@ public class OptimalPlacementAndRoute : MonoBehaviour
             population.Init(computedGridPoints, positions);
         }
 
-        population.Iterate();
-        population.printStats();
-        bestFitness = population.getBestFitness();
-        bestLocations = population.getBestLocations();
-        averageLocations = population.getAverageLocations();
-        standardDeviation = population.getStandardDeviation();
+        if (!population.isTerminated())
+        {
+            population.Iterate();
+            population.printStats();
+            bestFitness = population.getBestFitness();
+            bestLocations = population.getBestLocations();
+            averageLocations = population.getAverageLocations();
+            standardDeviation = population.getStandardDeviation();
+        }
     }
 
     // Draws Gizmos

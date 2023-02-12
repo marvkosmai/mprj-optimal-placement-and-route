@@ -2,17 +2,26 @@
 
 class PopulationStats
 {
+    public int populationSize;
+    public int crossoverRate;
+    public int mutationRate;
+    public int elists;
+
     public List<float> bestVisibility;
     public List<float> bestFitness;
     public List<int> bestLocations;
-    public List<int> averageLocations;
+    public List<float> averageLocations;
+    public List<float> averageFitness;
+    public List<float> standardDeviation;
 
     public PopulationStats()
     {
         bestVisibility = new List<float>();
         bestFitness = new List<float>();
         bestLocations = new List<int>();
-        averageLocations = new List<int>();
+        averageLocations = new List<float>();
+        standardDeviation = new List<float>();
+        averageFitness = new List<float>();
     }
 
     public void addBestVisibility(float f)
@@ -30,8 +39,18 @@ class PopulationStats
         bestLocations.Add(i);
     }
 
-    public void addAverageLocations(int i)
+    public void addAverageLocations(float f)
     {
-        averageLocations.Add(i);
+        averageLocations.Add(f);
+    }
+
+    public void addAverageFitness(float f)
+    {
+        averageFitness.Add(f);
+    }
+
+    public void addStandardDeviation(float f)
+    {
+        standardDeviation.Add(f);
     }
 }

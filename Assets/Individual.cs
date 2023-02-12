@@ -96,7 +96,8 @@ public class Individual
         float visiblePercent = (float)visibleSamples / possibleVisibleSamples;
         float locationPercent = (float)computedGridPoints.Length / this.allComputedGridPoints.Count;
 
-        this.fitness = visiblePercent + Mathf.Pow(1.0f - locationPercent, 10);
+        //this.fitness = visiblePercent +  (Mathf.Pow(2, 1.0f - locationPercent) - 1);
+        this.fitness = visiblePercent +  Mathf.Pow(1.0f - locationPercent, 1);
     }
 
     // Implemted a BTS

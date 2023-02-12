@@ -21,6 +21,8 @@ public class Population
 
     private int generation;
 
+    private bool terminated;
+
     private PopulationStats stats;
 
     public Population(int size, Selection selection, Crossover crossover, float mutationRate, float crossoverRate, float elits, int nSamples)
@@ -37,8 +39,13 @@ public class Population
 
         this.generation = 0;
         this.init = false;
+        this.terminated = false;
 
         stats = new PopulationStats();
+        stats.populationSize = size;
+        stats.crossoverRate = (int)(crossoverRate * 100);
+        stats.mutationRate = (int)(mutationRate * 100);
+        stats.elists = (int)(elits * 100);
     }
 
     public void Init(List<ComputedGridPoint> computedGridPoints, int positions)
@@ -103,7 +110,7 @@ public class Population
         }
         for (int i = 0; i < elits; i++)
         {
-            Individual elit = new Individual(computedGridPoints, individuals[i].chromosomeGridPoints, visiableSamples);
+            Individual elit = new Individual(computedGridPoints, individuals[i].chromosomeGridPoints.Clone() as bool[], visiableSamples);
             elit.Init();
             elit.CalcFitness();
             newIndividuals.Add(elit);
@@ -160,6 +167,7 @@ public class Population
         generation++;
 
         addStats();
+        CheckTermination();
     }
 
     private Individual Tournament()
@@ -277,6 +285,20 @@ public class Population
         return individual;
     }
 
+    private void CheckTermination()
+    {
+        if (generation >= 1500)
+        {
+            terminated = true;
+            JsonExporter.export(stats);
+        }
+    }
+
+    public bool isTerminated()
+    {
+        return terminated;
+    }
+
     public bool isInit()
     {
         return this.init;
@@ -287,6 +309,9 @@ public class Population
         stats.addBestVisibility(getBestVisibility());
         stats.addBestFitness(getBestFitness());
         stats.addBestLocations(getBestLocations());
+        stats.addAverageLocations(getAverageLocations());
+        stats.addStandardDeviation(getStandardDeviation());
+        stats.addAverageFitness(getAverageFitness());
     }
 
     public Individual getBest()
@@ -361,11 +386,6 @@ public class Population
             $"Average Fitness: {getAverageFitness()} | " +
             $"Standard Deviation: {getStandardDeviation()}"
         );
-
-        if (generation == 1000)
-        {
-            JsonExporter.export(stats);
-        }
     }
 
     private void Sort()
