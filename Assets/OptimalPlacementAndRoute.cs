@@ -69,6 +69,9 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
     private Population population;
 
+    // Route EA
+    private TSP tsp;
+
     [Space(10)]
 
     // Gizmo
@@ -83,6 +86,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     [Range(0, 2000)]
     public int showComputedGridPointIndex = 0;
     public bool showBestIndividual = false;
+    public bool showBestRoute = false;
 
     // Start is called before the first frame update
     void Start()
@@ -136,7 +140,16 @@ public class OptimalPlacementAndRoute : MonoBehaviour
             bestLocations = population.getBestLocations();
             averageLocations = population.getAverageLocations();
             standardDeviation = population.getStandardDeviation();
+            return;
         }
+
+        if (!tsp.IsInit())
+        {
+            tsp.SetIndividual(population.getBest());
+            tsp.Init();
+        }
+
+
     }
 
     // Draws Gizmos
@@ -207,6 +220,24 @@ public class OptimalPlacementAndRoute : MonoBehaviour
             }
 
         }
+
+        if (null != tsp && tsp.IsInit() && showBestRoute)
+        {
+            Individual best = population.getBest();
+            ComputedGridPoint[] computeds = best.computedGridPoints;
+            Route route = tsp.Best();
+
+            Gizmos.color = Color.green;
+
+            ComputedGridPoint start = computeds[route.route[0]];
+            for (int i = 1; i < route.route.Length; i++)
+            {
+                ComputedGridPoint end = computeds[route.route[i]];
+                Gizmos.DrawLine(start.location, end.location);
+                start = end;
+            }
+            Gizmos.DrawLine(start.location, computeds[route.route[0]].location);
+        }
     }
     // --- INIT
     void Init()
@@ -240,6 +271,12 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         if (null == population)
         {
             population = new Population(size, selection, crossover, mutationRate, crossoverRate, elits, nSamples);
+        }
+
+        // Route EA
+        if (null == tsp)
+        {
+            tsp = new TSP();
         }
     }
 

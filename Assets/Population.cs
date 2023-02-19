@@ -212,7 +212,11 @@ public class Population
 
         if (Random.Range(0.0f, 1.0f) > crossoverRate)
         {
-            return new Individual[] { a, b };
+            return new Individual[]
+            {
+                new Individual(computedGridPoints, a.chromosomeGridPoints.Clone() as bool[], visiableSamples),
+                new Individual(computedGridPoints, b.chromosomeGridPoints.Clone() as bool[], visiableSamples)
+            };
         }
 
         for (int i = 0; i < length; i++)
