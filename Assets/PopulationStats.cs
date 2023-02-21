@@ -12,6 +12,8 @@ class PopulationStats
     public List<int> bestLocations;
     public List<float> averageLocations;
     public List<float> averageFitness;
+    public List<float> averageVisibility;
+    public List<int> generations;
     public List<float> standardDeviation;
 
     public PopulationStats()
@@ -22,6 +24,8 @@ class PopulationStats
         averageLocations = new List<float>();
         standardDeviation = new List<float>();
         averageFitness = new List<float>();
+        averageVisibility = new List<float>();
+        generations = new List<int>();
     }
 
     public void addBestVisibility(float f)
@@ -49,8 +53,18 @@ class PopulationStats
         averageFitness.Add(f);
     }
 
+    public void addAverageVisibility(float f)
+    {
+        averageVisibility.Add(f);
+    }
+
     public void addStandardDeviation(float f)
     {
         standardDeviation.Add(f);
+    }
+
+    public void addGenerations(int i)
+    {
+        generations.Add(i);
     }
 }

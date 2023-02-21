@@ -20,10 +20,14 @@ public class Population
     private bool init;
 
     private int generation;
+    private Individual bestIndividual;
 
     private bool terminated;
 
     private PopulationStats stats;
+
+    private float bestMeanFitness;
+    private int changeCounter;
 
     public Population(int size, Selection selection, Crossover crossover, float mutationRate, float crossoverRate, float elits, int nSamples)
     {
@@ -37,10 +41,6 @@ public class Population
 
         this.nSamples = nSamples;
 
-        this.generation = 0;
-        this.init = false;
-        this.terminated = false;
-
         stats = new PopulationStats();
         stats.populationSize = size;
         stats.crossoverRate = (int)(crossoverRate * 100);
@@ -50,6 +50,14 @@ public class Population
 
     public void Init(List<ComputedGridPoint> computedGridPoints, int positions)
     {
+        bestIndividual = null;
+        this.generation = 0;
+        this.init = false;
+        this.terminated = false;
+
+        this.bestMeanFitness = 0f;
+        this.changeCounter = 0;
+
         this.computedGridPoints = computedGridPoints;
         this.visiableSamples = calcVisibleSamples();
 
@@ -67,10 +75,12 @@ public class Population
 
         this.Sort();
 
+        bestIndividual = getBest();
+
         Debug.Log("Population initialized!");
         this.init = true;
         this.generation = 1;
-        addStats();
+        //addStats();
     }
 
     private int calcVisibleSamples()
@@ -164,9 +174,15 @@ public class Population
         individuals.Clear();
         individuals = newIndividuals;
         Sort();
+
+        if (bestIndividual.fitness < individuals[0].fitness)
+        {
+            bestIndividual = individuals[0];
+        }
+
         generation++;
 
-        addStats();
+        //addStats();
         CheckTermination();
     }
 
@@ -291,10 +307,30 @@ public class Population
 
     private void CheckTermination()
     {
-        if (generation >= 1500)
+        if (bestMeanFitness < getAverageFitness())
         {
+            bestMeanFitness = getAverageFitness();
+            changeCounter = 0;
+        } else
+        {
+            changeCounter++;
+            //Debug.Log(changeCounter);
+            if (changeCounter > 900)
+            {
+                Debug.Log(changeCounter);
+            }
+        }
+
+        if (changeCounter == 1000 || generation >= 10000)
+        {
+            addStats();
             terminated = true;
-            JsonExporter.export(stats);
+            // TEST
+            init = false;
+            if (stats.generations.Count % 10 == 0)
+            {
+                JsonExporter.export(stats);
+            }
         }
     }
 
@@ -312,15 +348,22 @@ public class Population
     {
         stats.addBestVisibility(getBestVisibility());
         stats.addBestFitness(getBestFitness());
+        stats.addAverageFitness(getAverageFitness());
+        stats.addAverageVisibility(getAverageVisibility());
         stats.addBestLocations(getBestLocations());
         stats.addAverageLocations(getAverageLocations());
-        stats.addStandardDeviation(getStandardDeviation());
-        stats.addAverageFitness(getAverageFitness());
+        stats.addGenerations(generation);
+        //stats.addStandardDeviation(getStandardDeviation());
+        
     }
 
     public Individual getBest()
     {
-        return individuals[0];
+        if (null == bestIndividual)
+        {
+            return individuals[0];
+        }
+        return bestIndividual;
     }
 
     public float getAverageFitness()
@@ -335,6 +378,18 @@ public class Population
         return totalFitness / size;
     }
 
+    public float getAverageVisibility()
+    {
+        float totalVisibility = 0;
+
+        foreach (Individual i in individuals)
+        {
+            totalVisibility += i.visibility;
+        }
+
+        return totalVisibility / size;
+    }
+
     public float getAverageLocations()
     {
         int totalLocations = 0;
@@ -344,7 +399,7 @@ public class Population
             totalLocations += i.computedGridPoints.Length;
         }
 
-        return totalLocations / size;
+        return (float)totalLocations / size;
     }
 
     public float getBestVisibility()
@@ -375,7 +430,7 @@ public class Population
         return Mathf.Sqrt(sum / size);
     }
 
-    public void printStats(int everyGeneration = 10)
+    public void printStats(int everyGeneration = 100)
     {
         if (generation % everyGeneration != 0)
         {

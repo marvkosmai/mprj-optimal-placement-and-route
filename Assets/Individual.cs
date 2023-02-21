@@ -12,6 +12,7 @@ public class Individual
     public int possibleVisibleSamples;
     public float fitness = 0.0f;
     public bool fullyConnected;
+    public float visibility;
 
     public Individual(List<ComputedGridPoint> gridPoints, int initalPositions, int possibleVisibleSamples)
     {
@@ -94,13 +95,14 @@ public class Individual
 
         //float visiblePercent = (float)visibleSamples / this.allComputedGridPoints[0].coverage.Count;
         float visiblePercent = (float)visibleSamples / possibleVisibleSamples;
+        visibility = visiblePercent;
         float locationPercent = (float)computedGridPoints.Length / this.allComputedGridPoints.Count;
 
         float d1 = 0.5f;
         float d2 = 0.5f;
 
         //this.fitness = visiblePercent +  (Mathf.Pow(2, 1.0f - locationPercent) - 1);
-        this.fitness = (d1 * visiblePercent) + (d2 * Mathf.Pow(1.0f - locationPercent, 3));
+        this.fitness = (d1 * visiblePercent) + (d2 * Mathf.Pow(1.0f - locationPercent, 1));
     }
 
     // Implemted a BTS
