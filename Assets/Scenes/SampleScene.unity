@@ -720,10 +720,10 @@ MonoBehaviour:
   maxScanningAngle: 60
   size: 250
   positions: 1
-  crossover: 0
+  crossover: 1
   selection: 0
   mutationRate: 0.2
-  crossoverRate: 0.7
+  crossoverRate: 0.6
   elits: 0
   showSamples: 0
   samplesColor: {r: 0, g: 1, b: 0, a: 1}

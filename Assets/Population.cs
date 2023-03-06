@@ -153,6 +153,13 @@ public class Population
                     matingPool[Random.Range(0, matingPool.Count)]
                 );
             } 
+            else if (crossover == Crossover.Uniform)
+            {
+                kids = Uniform(
+                    matingPool[Random.Range(0, matingPool.Count)],
+                    matingPool[Random.Range(0, matingPool.Count)]
+                );
+            }
             else
             {
                 throw new System.NotImplementedException("No crossover method!");
@@ -242,6 +249,42 @@ public class Population
                 chromosomeGridPointsA[i] = a.chromosomeGridPoints[i];
                 chromosomeGridPointsB[i] = b.chromosomeGridPoints[i];
             } 
+            else
+            {
+                chromosomeGridPointsA[i] = b.chromosomeGridPoints[i];
+                chromosomeGridPointsB[i] = a.chromosomeGridPoints[i];
+            }
+        }
+
+        return new Individual[]
+        {
+            new Individual(computedGridPoints, chromosomeGridPointsA, visiableSamples),
+            new Individual(computedGridPoints, chromosomeGridPointsB, visiableSamples)
+        };
+    }
+
+    private Individual[] Uniform(Individual a, Individual b)
+    {
+        int length = a.chromosomeGridPoints.Length;
+        bool[] chromosomeGridPointsA = new bool[length];
+        bool[] chromosomeGridPointsB = new bool[length];
+
+        if (Random.Range(0.0f, 1.0f) > crossoverRate)
+        {
+            return new Individual[]
+            {
+                new Individual(computedGridPoints, a.chromosomeGridPoints.Clone() as bool[], visiableSamples),
+                new Individual(computedGridPoints, b.chromosomeGridPoints.Clone() as bool[], visiableSamples)
+            };
+        }
+
+        for (int i = 0; i < length; i++)
+        {
+            if (Random.Range(0.0f, 1.0f) > 0.5)
+            {
+                chromosomeGridPointsA[i] = a.chromosomeGridPoints[i];
+                chromosomeGridPointsB[i] = b.chromosomeGridPoints[i];
+            }
             else
             {
                 chromosomeGridPointsA[i] = b.chromosomeGridPoints[i];
