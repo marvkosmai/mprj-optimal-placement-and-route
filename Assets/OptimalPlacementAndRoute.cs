@@ -63,9 +63,14 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float mutationRate = 0.05f;
     [Range(0.0f, 1.0f)]
+    public float crossoverRate = 1.00f;
+    [Range(0.0f, 1.0f)]
     public float elits = 0.1f;
 
     private Population population;
+
+    // Route EA
+    private TSP tsp;
 
     [Space(10)]
 
@@ -81,6 +86,7 @@ public class OptimalPlacementAndRoute : MonoBehaviour
     [Range(0, 2000)]
     public int showComputedGridPointIndex = 0;
     public bool showBestIndividual = false;
+    public bool showBestRoute = false;
 
     // Start is called before the first frame update
     void Start()
@@ -91,8 +97,24 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         {
             GenerateGrid();
             ComputeRasterPoints();
+
         }
     }
+
+    /*
+    [DebugGUIGraph(min: 0, max: 1, r: 0, g: 1, b: 1, autoScale: true, group: 1)]
+    float bestFitness = 0;
+
+    [DebugGUIGraph(min: 0, max: 1, r: 1, g: 0, b: 0, autoScale: true, group: 1)]
+    float bestLocations = 0;
+
+
+    [DebugGUIGraph(min: 0, max: 1, r: 0, g: 0, b: 1, autoScale: true, group: 2)]
+    float averageLocations = 0;
+
+    [DebugGUIGraph(min: 0, max: 0, r: 0, g: 1, b: 0, autoScale: true, group: 3)]
+    */
+    float standardDeviation = 0;
 
     // Update is called once per frame
     void Update()
@@ -113,8 +135,25 @@ public class OptimalPlacementAndRoute : MonoBehaviour
             population.Init(computedGridPoints, positions);
         }
 
-        population.Iterate();
-        population.printStats();
+        if (!population.isTerminated())
+        {
+            population.Iterate();
+            population.printStats();
+            //bestFitness = population.getBestFitness();
+            //bestLocations = population.getBestLocations();
+            //averageLocations = population.getAverageLocations();
+            //standardDeviation = population.getStandardDeviation();
+            return;
+        }
+
+        if (!tsp.IsInit())
+        {
+            tsp.SetIndividual(population.getBest());
+            tsp.Init();
+        }
+
+        tsp.Iterate();
+        Debug.Log(tsp.Best().fitness);
     }
 
     // Draws Gizmos
@@ -172,18 +211,36 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
             for (int i = 0; i < nSamples; i++)
             {
-                if (best.totalCoverage[i]) Gizmos.color = Color.green;
-                else Gizmos.color = Color.red;
+                if (best.totalCoverage[i]) Gizmos.color = Color.black;
+                else Gizmos.color = Color.white;
 
                 Gizmos.DrawSphere(samplePoints[i].location, 0.1f);
             }
 
-            Gizmos.color = Color.blue;
+            Gizmos.color = Color.black;
             foreach (ComputedGridPoint computedGridPoint in best.computedGridPoints)
             {
                 Gizmos.DrawSphere(computedGridPoint.location, 0.2f);
             }
 
+        }
+
+        if (null != tsp && tsp.IsInit() && showBestRoute)
+        {
+            Individual best = population.getBest();
+            ComputedGridPoint[] computeds = best.computedGridPoints;
+            Route route = tsp.Best();
+
+            Gizmos.color = Color.green;
+
+            ComputedGridPoint start = computeds[route.route[0]];
+            for (int i = 1; i < route.route.Length; i++)
+            {
+                ComputedGridPoint end = computeds[route.route[i]];
+                Gizmos.DrawLine(start.location, end.location);
+                start = end;
+            }
+            Gizmos.DrawLine(start.location, computeds[route.route[0]].location);
         }
     }
     // --- INIT
@@ -217,7 +274,13 @@ public class OptimalPlacementAndRoute : MonoBehaviour
         // Placement EA
         if (null == population)
         {
-            population = new Population(size, selection, crossover, mutationRate, elits, nSamples);
+            population = new Population(size, selection, crossover, mutationRate, crossoverRate, elits, nSamples);
+        }
+
+        // Route EA
+        if (null == tsp)
+        {
+            tsp = new TSP();
         }
     }
 

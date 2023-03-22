@@ -8,6 +8,13 @@ class JsonExporter
     {
         string json = JsonConvert.SerializeObject(stats);
 
-        File.WriteAllText("stats.json", json);
+        File.WriteAllText(
+            $"p{stats.populationSize}_" +
+            $"c{stats.crossoverRate}_" +
+            $"m{stats.mutationRate}_" +
+            $"e{stats.elists}_" +
+            $"g{stats.bestFitness.Count}_" +
+            $"{DateTime.Now.Ticks}" +
+            $".json", json);
     }
 }

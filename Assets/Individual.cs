@@ -4,22 +4,63 @@ using UnityEngine;
 
 public class Individual
 {
+    public List<ComputedGridPoint> allComputedGridPoints;
+    public bool[] chromosomeGridPoints;
     public ComputedGridPoint[] computedGridPoints;
     public bool[] totalCoverage;
     public int visibleSamples;
-    public int fitness;
+    public int possibleVisibleSamples;
+    public float fitness = 0.0f;
     public bool fullyConnected;
+    public float visibility;
 
-    public Individual(List<ComputedGridPoint> gridPoints)
+    public Individual(List<ComputedGridPoint> gridPoints, int initalPositions, int possibleVisibleSamples)
     {
-        this.computedGridPoints = new ComputedGridPoint[gridPoints.Count];
-        this.totalCoverage = new bool[gridPoints[0].coverage.Count];
+        this.allComputedGridPoints = gridPoints;
+        this.chromosomeGridPoints = new bool[gridPoints.Count];
+        this.possibleVisibleSamples = possibleVisibleSamples;
+        
+
+        for (int i = 0; i < initalPositions; i++)
+        {
+            int randomIndex = Random.Range(0, gridPoints.Count);
+            this.chromosomeGridPoints[randomIndex] = true;
+        }
+    }
+
+    public Individual(List<ComputedGridPoint> gridPoints, bool[] chromosomeGridPoints, int possibleVisibleSamples)
+    {
+        this.allComputedGridPoints = gridPoints;
+        this.chromosomeGridPoints = chromosomeGridPoints;
+        this.possibleVisibleSamples = possibleVisibleSamples;
+    }
+
+    public void Init()
+    {
+        this.totalCoverage = new bool[allComputedGridPoints[0].coverage.Count];
+
+        int positions = 0;
+        for (int i = 0; i < chromosomeGridPoints.Length; i++)
+        {
+            if (chromosomeGridPoints[i])
+            {
+                positions++;
+            }
+        }
+        this.computedGridPoints = new ComputedGridPoint[positions];
+
+        int count = 0;
+        for (int i = 0; i < chromosomeGridPoints.Length; i++)
+        {
+            if (chromosomeGridPoints[i])
+            {
+                computedGridPoints[count++] = allComputedGridPoints[i];
+            }
+        }
 
         for (int i = 0; i < computedGridPoints.Length; i++)
         {
-            ComputedGridPoint gridPoint = gridPoints[i];
-
-            computedGridPoints[i] = gridPoint;
+            ComputedGridPoint gridPoint = computedGridPoints[i];
 
             for (int j = 0; j < totalCoverage.Length; j++)
             {
@@ -29,12 +70,16 @@ public class Individual
                 }
             }
         }
-
-        this.CalcFitness();
     }
 
-    private void CalcFitness()
+    public void CalcFitness()
     {
+        if (computedGridPoints.Length == 0)
+        {
+            this.fitness = 0.01f;
+            return;
+        }
+
         int samples = 0;
         for (int j = 0; j < totalCoverage.Length; j++)
         {
@@ -44,13 +89,23 @@ public class Individual
             }
         }
 
-        CalcFullyConnected();
+        //CalcFullyConnected();
 
         this.visibleSamples = samples;
 
-        this.fitness = visibleSamples;
+        //float visiblePercent = (float)visibleSamples / this.allComputedGridPoints[0].coverage.Count;
+        float visiblePercent = (float)visibleSamples / possibleVisibleSamples;
+        visibility = visiblePercent;
+        float locationPercent = (float)computedGridPoints.Length / this.allComputedGridPoints.Count;
+
+        float d1 = 0.5f;
+        float d2 = 0.5f;
+
+        //this.fitness = (d1 * visiblePercent) +  (d2 * (Mathf.Pow(2, 1.0f - locationPercent) - 1));
+        this.fitness = (d1 * visiblePercent) + (d2 * Mathf.Pow(1.0f - locationPercent, 2));
     }
 
+    // Implemted a BTS
     private void CalcFullyConnected()
     {
         List<ComputedGridPoint> visited = new List<ComputedGridPoint>();
