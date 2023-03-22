@@ -334,7 +334,7 @@ public class Population
             return individual;
         }
 
-        if (Random.Range(0.0f, 1.0f) <= 0.5)
+        if (Random.Range(0.0f, 1.0f) <= 0.7) // 70% deactivate
         {
             int p = active[Random.Range(0, active.Count)];
             individual.chromosomeGridPoints[p] = false;
@@ -350,6 +350,7 @@ public class Population
 
     private void CheckTermination()
     {
+        addStats();
         if (bestMeanFitness < getAverageFitness())
         {
             bestMeanFitness = getAverageFitness();
@@ -369,11 +370,12 @@ public class Population
             addStats();
             terminated = true;
             // TEST
-            init = false;
-            if (stats.generations.Count % 10 == 0)
-            {
-                JsonExporter.export(stats);
-            }
+            
+            // init = false;
+            // if (stats.generations.Count % 10 == 0)
+            // {
+                 JsonExporter.export(stats);
+            // }
         }
     }
 

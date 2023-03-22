@@ -19,6 +19,8 @@ public class TSP
 
     public bool init = false;
 
+    private Route best;
+
     public void SetIndividual(Individual individual)
     {
         this.individual = individual;
@@ -50,7 +52,7 @@ public class TSP
                 ComputedGridPoint a = computedGridPoints[i];
                 ComputedGridPoint b = computedGridPoints[j];
 
-                float distance = float.MaxValue;
+                float distance = -1.0f;
 
                 RaycastHit hit;
                 if (!Physics.Raycast(a.location, (b.location - a.location).normalized, out hit, Mathf.Infinity))
@@ -90,12 +92,208 @@ public class TSP
 
     public void Iterate()
     {
+        // Selection
+        List<Route> pool = new List<Route>();
+        for (int i = 0; i < populationSize; i += 2)
+        {
+            pool.Add(TournamentSelection());
+        }
 
+        // Recombination
+        List<Route> newPopulation = new List<Route>();
+        for (int i = 0; i < populationSize; i++)
+        {
+            Route offspring = EdgeRecombination(
+                pool[UnityEngine.Random.Range(0, pool.Count)],
+                pool[UnityEngine.Random.Range(0, pool.Count)]
+            );
+
+            offspring = InversionMutation(offspring);
+
+            newPopulation.Add(offspring);
+        }
+        population.Clear();
+        population = newPopulation;
+        Sort();
+
+        if (Best().fitness > population[0].fitness)
+        {
+            best = population[0];
+        }
+    }
+
+    private Route InversionMutation(Route offspring)
+    {
+        if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.05f)
+        {
+            return offspring;
+        }
+
+        int start = UnityEngine.Random.Range(0, offspring.route.Length);
+        int end = UnityEngine.Random.Range(0, offspring.route.Length);
+
+        if (start == end) return offspring;
+
+        if (start > end)
+        {
+            int temp = start;
+            start = end;
+            end = temp;
+        }
+
+        int[] route = offspring.route;
+        int[] routeCopy = offspring.route.Clone() as int[];
+
+        int step = end;
+        for (int i = start; i <= end; i++)
+        {
+            route[i] = routeCopy[step];
+            step--;
+        }
+
+        offspring = new Route(map, route);
+        offspring.CalcFitness();
+
+        return offspring;
+    }
+
+    private Route TournamentSelection()
+    {
+        Route a = population[UnityEngine.Random.Range(0, population.Count)];
+        Route b = population[UnityEngine.Random.Range(0, population.Count)];
+
+        return a.fitness < b.fitness ? a : b;
+    }
+
+    private Route EdgeRecombination(Route a, Route b)
+    {
+        List<List<int>> edgeMap = new List<List<int>>();
+
+        for (int i = 0; i < a.route.Length; i++)
+        {
+            edgeMap.Add(new List<int>());
+        }
+
+        for (int i = 0; i < a.route.Length; i++)
+        {
+            List<int> edges = edgeMap[a.route[i]];
+            int before = i - 1;
+            int after = i + 1;
+
+            if (-1 == before) before = a.route.Length - 1;
+            if (a.route.Length == after) after = 0;
+
+            if (!edges.Contains(a.route[before])) edges.Add(a.route[before]);
+            if (!edges.Contains(a.route[after])) edges.Add(a.route[after]);
+
+            edgeMap[a.route[i]] = edges;
+        }
+
+        for (int i = 0; i < b.route.Length; i++)
+        {
+            List<int> edges = edgeMap[b.route[i]];
+            int before = i - 1;
+            int after = i + 1;
+
+            if (-1 == before) before = b.route.Length - 1;
+            if (b.route.Length == after) after = 0;
+
+            if (!edges.Contains(b.route[before])) edges.Add(b.route[before]);
+            if (!edges.Contains(b.route[after])) edges.Add(b.route[after]);
+
+            edgeMap[b.route[i]] = edges;
+        }
+
+        int[] route = new int[a.route.Length];
+
+        // choose starting location
+        int location = LocationWithLessEdges(a.route[0], b.route[0], edgeMap);
+
+        for (int i = 0; i < a.route.Length; i++)
+        {
+            route[i] = location;
+            edgeMap = RemoveLocationFromMap(location, edgeMap);
+
+            if (i == a.route.Length - 1)
+            {
+                continue;
+            }
+
+            List<int> edges = edgeMap[location];
+
+            if (0 == edges.Count)
+            {
+                location = RandomLocation(edgeMap, route, i);
+                continue;
+            }
+            
+            int next = edges[0];
+
+            for (int j = 1; j < edges.Count; j++)
+            {
+                next = LocationWithLessEdges(next, edges[j], edgeMap);
+            }
+
+            location = next;
+        }
+
+        Route offspring = new Route(map, route);
+        offspring.CalcFitness();
+
+        return offspring;
+    }
+
+    private int RandomLocation(List<List<int>> edgeMap, int[] visited, int length)
+    {
+        List<int> unvisited = new List<int>();
+        for (int i = 0; i < edgeMap.Count; i++)
+        {
+            bool next = false;
+            for (int j = 0; j <= length; j++)
+            {
+                if (i == visited[j]) next = true;
+            }
+
+            if (next) continue;
+
+            unvisited.Add(i);
+        }
+
+        return unvisited[UnityEngine.Random.Range(0, unvisited.Count)];
+    }
+
+    private int LocationWithLessEdges(int a, int b, List<List<int>> edgeMap)
+    {
+        List<int> edgesA = edgeMap[a];
+        List<int> edgesB = edgeMap[b];
+
+        if (edgesA.Count == edgesB.Count)
+        {
+            return UnityEngine.Random.Range(0.0f, 1.0f) > 0.5f ? a : b;
+        }
+
+        return edgesA.Count < edgesB.Count ? a : b;
+    }
+
+    private List<List<int>> RemoveLocationFromMap(int location, List<List<int>> edgeMap)
+    {
+        for (int i = 0; i < edgeMap.Count; i++)
+        {
+            List<int> edgeList = edgeMap[i];
+            edgeList.Remove(location);
+            edgeMap[i] = edgeList;
+        }
+
+        return edgeMap;
     }
 
     public Route Best()
     {
-        return population[0];
+        if (null == best)
+        {
+            best = population[0];
+        }
+        return best;
     }
 
     private void Sort()

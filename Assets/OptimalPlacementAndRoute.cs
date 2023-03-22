@@ -152,7 +152,8 @@ public class OptimalPlacementAndRoute : MonoBehaviour
             tsp.Init();
         }
 
-
+        tsp.Iterate();
+        Debug.Log(tsp.Best().fitness);
     }
 
     // Draws Gizmos
@@ -210,13 +211,13 @@ public class OptimalPlacementAndRoute : MonoBehaviour
 
             for (int i = 0; i < nSamples; i++)
             {
-                if (best.totalCoverage[i]) Gizmos.color = Color.green;
-                else Gizmos.color = Color.red;
+                if (best.totalCoverage[i]) Gizmos.color = Color.black;
+                else Gizmos.color = Color.white;
 
                 Gizmos.DrawSphere(samplePoints[i].location, 0.1f);
             }
 
-            Gizmos.color = Color.blue;
+            Gizmos.color = Color.black;
             foreach (ComputedGridPoint computedGridPoint in best.computedGridPoints)
             {
                 Gizmos.DrawSphere(computedGridPoint.location, 0.2f);

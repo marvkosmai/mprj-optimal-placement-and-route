@@ -20,14 +20,26 @@ public class Route
     {
         fitness = 0f;
 
+        int count = 1;
+
         int start = route[0];
         for (int i = 1; i < route.Length; i++)
         {
             int end = route[i];
-            fitness += map[start, end];
+            float distance = map[start, end];
+
+            if (0 > distance)
+            {
+                count++;
+                distance = 100.0f;
+            }
+
+            fitness += distance;
             start = end;
         }
         fitness += map[start, route[0]];
+
+        fitness *= count;
 
         return fitness;
     }
