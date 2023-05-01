@@ -6,6 +6,7 @@ using UnityEngine;
 public class Route
 {
     public float fitness;
+    public int errors;
 
     private float[,] map;
     public int[] route;
@@ -22,6 +23,18 @@ public class Route
 
         int count = 1;
 
+        float maxLength = 0;
+        for (int i = 0; i < route.Length; i++)
+        {
+            for (int j = 0; j < route.Length; j++)
+            {
+                if (maxLength < map[i, j])
+                {
+                    maxLength = map[i, j];
+                }
+            }
+        }
+
         int start = route[0];
         for (int i = 1; i < route.Length; i++)
         {
@@ -31,13 +44,24 @@ public class Route
             if (0 > distance)
             {
                 count++;
-                distance = 100.0f;
+                distance += maxLength;
             }
 
             fitness += distance;
             start = end;
         }
-        fitness += map[start, route[0]];
+        if (map[start, route[0]] > 0)
+        {
+            fitness += map[start, route[0]];
+        }
+        else
+        {
+            count++;
+            fitness += maxLength;
+        }
+
+        errors = count;
+        
 
         fitness *= count;
 

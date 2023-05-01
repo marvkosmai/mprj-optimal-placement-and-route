@@ -12,12 +12,15 @@ public class TSP
     private float[,] map;
 
     private int populationSize = 200;
-    private float mutationRate = 0.01f;
+    private float mutationRate = 0.05f;
     private int generation;
 
     private List<Route> population;
 
     public bool init = false;
+
+    public float averageFitness;
+    public int counter;
 
     private Route best;
 
@@ -32,6 +35,10 @@ public class TSP
         {
             throw new Exception("no individual");
         }
+
+
+        averageFitness = float.MaxValue;
+        counter = 0;
 
         // calculate distance map
         computedGridPoints = individual.computedGridPoints;
@@ -120,11 +127,40 @@ public class TSP
         {
             best = population[0];
         }
+
+        if (averageFitness > getAverageFitness())
+        {
+            averageFitness = getAverageFitness();
+            counter = 0;
+        } else
+        {
+            counter++;
+        }
+
+        if (counter >= 1000)
+        {
+            Debug.Log(best.errors);
+            Debug.Log(best.fitness);
+            init = false;
+            best = null;
+        }
+    }
+
+    private float getAverageFitness()
+    {
+        float f = 0;
+
+        foreach (Route r in population)
+        {
+            f += r.fitness;
+        }
+
+        return f / population.Count;
     }
 
     private Route InversionMutation(Route offspring)
     {
-        if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.05f)
+        if (UnityEngine.Random.Range(0.0f, 1.0f) > mutationRate)
         {
             return offspring;
         }
